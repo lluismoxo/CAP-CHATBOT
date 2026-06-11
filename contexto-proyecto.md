@@ -18,7 +18,12 @@ Chatbot RAG para CAP Consultor. Next.js 16 (App Router) + Supabase + OpenAI, dep
 - **Build verificado**: `npm run build` OK con Next 16.2.7.
 - **Rediseño widget iframe (11-06-2026)**: eliminados header (logo/título/subtítulo + link capconsultor.eu) y footer (© / contacto). `app/page.tsx` ahora es solo el `<Chat />` a pantalla completa, compacto (`max-w-md`, `h-screen`), pensado para incrustar en una esquina vía iframe. `Chat.tsx`: alturas `vh` sustituidas por `flex-1 min-h-0`. `next.config.js`: cabecera CSP `frame-ancestors 'self' https://capconsultor.eu https://www.capconsultor.eu` para permitir embed solo en dominios CAP.
 - **Launcher burbuja flotante**: `public/widget.js` — script self-contained que inyecta burbuja en esquina inf. derecha y abre/cierra el iframe del chat (estilo Intercom). Se integra con `<script src="https://DOMINIO/widget.js" defer></script>`. Configurable vía `window.CAP_WIDGET = {url, color}`. Decisión del usuario (11-06): burbuja en vez de iframe siempre abierto.
-- **BLOQUEANTE detectado**: la deployment tiene Vercel Deployment Protection activado (HTTP 401 en `/api/chat`). Mientras esté activo, el iframe en capconsultor.eu no podrá cargar el chat. El usuario debe desactivar la protección en Vercel → Settings → Deployment Protection.
+- **CHATBOT EN PRODUCCIÓN Y FUNCIONANDO (12-06-2026)**. URL prod: `https://capchatbotfinal.vercel.app`. API `/api/chat` responde con RAG correcto.
+- **Bugs resueltos en el deploy**:
+  1. Vercel Deployment Protection activado → HTTP 401. Desactivado por el usuario.
+  2. Vercel Hobby bloqueaba deploys: commits firmados con email no asociado a GitHub (`luis@MacBook-Air-de-luis.local` y luego `luismoxo.trabajo@gmail.com` que no estaba en la cuenta). Solución: reescritos todos los commits con `lluismoxo@gmail.com` (filter-branch) + force-push. Git config del repo ahora usa ese email.
+  3. **Bug raíz del "Connection error"**: la `OPENAI_API_KEY` pegada en Vercel tenía un `\n` al final → "is not a legal HTTP header value". Fix en código: `.trim()` en todas las env keys (`lib/openai.ts`, `lib/supabase.ts`) — robusto aunque se repegue mal.
+- **Nota mantenimiento**: cualquier commit futuro debe usar `lluismoxo@gmail.com` o el deploy se bloquea (plan Hobby).
 
 ## Decisiones
 - Sin embeddings — contexto CAP entero cabe en system prompt (decisión del usuario por simplicidad y coste).

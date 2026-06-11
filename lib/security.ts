@@ -7,6 +7,7 @@ export const LIMITS = {
 const DEFAULT_ALLOWED = [
   "https://capconsultor.eu",
   "https://www.capconsultor.eu",
+  "https://capchatbotfinal.vercel.app",
   "https://cap-chatbot-iota.vercel.app",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
