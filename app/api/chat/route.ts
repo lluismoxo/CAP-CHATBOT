@@ -156,15 +156,28 @@ export async function POST(req: NextRequest) {
     const system = SYSTEM_PROMPT_TEMPLATE(ctx);
 
     const openai = getOpenAI();
-    const completion = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      messages: [
-        { role: "system", content: system },
-        ...messages.map((m) => ({ role: m.role, content: m.content })),
-      ],
-      temperature: 0.5,
-      max_tokens: 600,
-    });
+    let completion;
+    try {
+      completion = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [
+          { role: "system", content: system },
+          ...messages.map((m) => ({ role: m.role, content: m.content })),
+        ],
+        temperature: 0.5,
+        max_tokens: 600,
+      });
+    } catch (e: any) {
+      // Diagnóstico temporal: detalla por qué falla la llamada a OpenAI.
+      console.error("[/api/chat] OpenAI error:", e?.status, e?.code, e?.message, e?.cause);
+      const detail = [e?.status, e?.code, e?.message, e?.cause?.code, e?.cause?.message]
+        .filter(Boolean)
+        .join(" | ");
+      return NextResponse.json(
+        { error: "OpenAI: " + (detail || "fallo desconocido"), stage: "openai" },
+        { status: 502 }
+      );
+    }
 
     const reply = completion.choices[0]?.message?.content || "Lo siento, no he podido generar una respuesta.";
     await persistMessage(conv.id, "assistant", reply);
