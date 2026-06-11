@@ -3,6 +3,8 @@ import { buildCAPContext } from "@/lib/context";
 import { getOpenAI, OPENAI_MODEL, isOpenAIConfigured } from "@/lib/openai";
 import { supabaseAdmin } from "@/lib/supabase";
 import { extractLeadInfo, hasLeadSignal } from "@/lib/leadExtractor";
+import { rateLimit, getClientIP } from "@/lib/rateLimit";
+import { checkOrigin, validatePayload, sanitizeUserMessage } from "@/lib/security";
 
 export const runtime = "nodejs";
 
@@ -101,12 +103,38 @@ async function upsertLeadFromMessage(conversationId: string, existingLeadId: str
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const sessionId: string = body.sessionId;
-    const messages: ChatMessage[] = body.messages || [];
-    if (!sessionId || !messages.length) {
-      return NextResponse.json({ error: "sessionId y messages requeridos" }, { status: 400 });
+    const originCheck = checkOrigin(req);
+    if (!originCheck.ok) {
+      return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
     }
+
+    const ip = getClientIP(req);
+    const rl = rateLimit(ip);
+    if (!rl.ok) {
+      const retryAfter = Math.max(1, Math.ceil(((rl as any).resetAt - Date.now()) / 1000));
+      return NextResponse.json(
+        { error: `Demasiadas peticiones. Espera unos minutos (límite por ${(rl as any).scope}).` },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
+      );
+    }
+
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+    }
+
+    const validation = validatePayload(body);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
+    }
+
+    const sessionId: string = body.sessionId;
+    const messages: ChatMessage[] = body.messages.map((m: ChatMessage) => ({
+      role: m.role,
+      content: m.role === "user" ? sanitizeUserMessage(m.content) : m.content,
+    }));
 
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     if (!lastUser) {

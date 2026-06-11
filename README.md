@@ -34,6 +34,25 @@ cp .env.local.example .env.local
 | `OPENAI_API_KEY` | platform.openai.com → API Keys | Sí (en producción; sin ella el chat responde con fallback) |
 | `OPENAI_MODEL` | Modelo OpenAI a usar | No (default `gpt-4o-mini`) |
 | `ADMIN_API_TOKEN` | Token cualquiera que invente usted | No (solo si quiere acceder a `GET /api/leads`) |
+| `ALLOWED_ORIGINS` | Lista CSV de origins permitidos | No (default: capconsultor.eu + dominio Vercel + localhost) |
+
+## Seguridad anti-abuso
+
+`POST /api/chat` aplica capas defensa:
+
+1. **Origin check**: solo acepta requests desde dominios en `ALLOWED_ORIGINS` (en producción).
+2. **Rate limit por IP** (in-memory):
+   - 10 mensajes/minuto
+   - 50 mensajes/hora
+   - 200 mensajes/día
+3. **Validación entrada**:
+   - Max 2000 chars por mensaje
+   - Max 30 mensajes por request
+   - Max 20000 chars totales en histórico
+4. **Sanitización prompt injection**: bloquea patrones tipo "ignore previous instructions".
+5. **OpenAI**: `max_tokens: 600` cap por respuesta.
+
+**Recomendado además:** configurar **hard limit mensual** en https://platform.openai.com/account/limits (ej. 20 USD/mes) como red de seguridad final.
 
 > El proyecto Supabase ya está creado: **CAP CHATBOT** (`mhsphyvehhmkyvartsrr`). El esquema y los datos seed ya están aplicados.
 
