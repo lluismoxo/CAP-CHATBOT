@@ -10,13 +10,15 @@ export async function buildCAPContext(): Promise<string> {
   const now = Date.now();
   if (cache && cache.expires > now) return cache.text;
 
-  const [company, audience, services, team, clients, partners] = await Promise.all([
+  const [company, audience, services, team, clients, partners, industries, industryServices] = await Promise.all([
     supabasePublic.from("company_info").select("*").limit(1).maybeSingle(),
     supabasePublic.from("target_audience").select("*"),
     supabasePublic.from("services").select("*").order("is_primary", { ascending: false }),
     supabasePublic.from("team_members").select("*"),
     supabasePublic.from("clients").select("*"),
     supabasePublic.from("partners").select("*"),
+    supabasePublic.from("industries").select("*").order("id"),
+    supabasePublic.from("industry_services").select("*"),
   ]);
 
   const c: CompanyInfo = company.data || {};
@@ -25,6 +27,8 @@ export async function buildCAPContext(): Promise<string> {
   const tm: Row[] = team.data || [];
   const cli: Row[] = clients.data || [];
   const prt: Row[] = partners.data || [];
+  const ind: Row[] = industries.data || [];
+  const indSrv: Row[] = industryServices.data || [];
 
   const parts: string[] = [];
 
@@ -56,10 +60,31 @@ export async function buildCAPContext(): Promise<string> {
 
   if (srv.length) {
     parts.push("");
-    parts.push("## 4. SERVICIOS");
+    parts.push("## 4. SERVICIOS (por categoría)");
+    const byCat: Record<string, Row[]> = {};
     for (const s of srv) {
-      const flag = s.is_primary ? " (MÉTODO PRINCIPAL)" : "";
-      parts.push(`- ${s.name}${flag} [${s.category || ""}]: ${s.description || ""}${s.tools ? " — Tecnologías: " + s.tools : ""}`);
+      const cat = s.category || "Otros";
+      (byCat[cat] = byCat[cat] || []).push(s);
+    }
+    for (const cat of Object.keys(byCat)) {
+      parts.push(`\n### ${cat}`);
+      for (const s of byCat[cat]) {
+        const flag = s.is_primary ? " ⭐" : "";
+        parts.push(`- ${s.name}${flag}: ${s.description || ""}${s.tools ? " — Tecnologías: " + s.tools : ""}`);
+      }
+    }
+  }
+
+  if (ind.length) {
+    parts.push("");
+    parts.push("## 4.b SERVICIOS RECOMENDADOS POR SECTOR");
+    parts.push("(Cuando un usuario diga su sector, prioriza estos servicios en la conversación.)");
+    for (const i of ind) {
+      const items = indSrv.filter((x) => x.industry_id === i.id).map((x) => x.service_name);
+      if (!items.length) continue;
+      const desc = i.description ? ` (${i.description})` : "";
+      parts.push(`\n### ${i.name}${desc}`);
+      for (const it of items) parts.push(`- ${it}`);
     }
   }
 

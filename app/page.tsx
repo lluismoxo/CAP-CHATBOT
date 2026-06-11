@@ -1,4 +1,5 @@
 import Chat from "@/components/Chat";
+import CapLogo from "@/components/CapLogo";
 
 export default function Home() {
   return (
@@ -6,19 +7,17 @@ export default function Home() {
       <header className="w-full border-b border-neutral-200">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-capblue flex items-center justify-center text-white font-bold tracking-tight">
-              C
-            </div>
+            <CapLogo size={40} className="rounded-md shadow-sm" />
             <div>
-              <h1 className="text-base font-semibold text-black leading-tight">CAP Consultor</h1>
-              <p className="text-xs text-neutral-500">Consultoría adaptativa para pymes</p>
+              <h1 className="text-base font-semibold text-black leading-tight">CAP Consultoría Adaptativa Pymes</h1>
+              <p className="text-xs text-neutral-500">Consultoría que se adapta a tu empresa</p>
             </div>
           </div>
           <a
             href="https://capconsultor.eu/"
             target="_blank"
             rel="noreferrer"
-            className="text-xs text-capblue hover:underline"
+            className="text-xs text-capblue hover:underline whitespace-nowrap"
           >
             capconsultor.eu →
           </a>
