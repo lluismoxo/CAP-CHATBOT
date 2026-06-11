@@ -1,17 +1,13 @@
 import Chat from "@/components/Chat";
-import CapLogo from "@/components/CapLogo";
 
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center bg-white">
       <header className="w-full border-b border-neutral-200">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CapLogo size={40} className="rounded-md shadow-sm" />
-            <div>
-              <h1 className="text-base font-semibold text-black leading-tight">CAP Consultoría Adaptativa Pymes</h1>
-              <p className="text-xs text-neutral-500">Consultoría que se adapta a tu empresa</p>
-            </div>
+          <div>
+            <h1 className="text-base font-semibold text-black leading-tight">CAP Consultoría Adaptativa Pymes</h1>
+            <p className="text-xs text-neutral-500">Consultoría que se adapta a tu empresa</p>
           </div>
           <a
             href="https://capconsultor.eu/"
