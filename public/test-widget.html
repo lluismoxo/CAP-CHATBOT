@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test widget CAP</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f5f7;
+      color: #222;
+    }
+    .demo {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+    h1 { font-size: 22px; }
+    p { line-height: 1.6; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="demo">
+    <h1>Página de prueba del widget CAP</h1>
+    <p>
+      Esta página vive en el mismo dominio que el chatbot, así que el iframe está
+      permitido y puedes ver el widget funcionando. Pulsa la burbuja azul de la
+      esquina inferior derecha para abrir el chat.
+    </p>
+    <p>
+      Cuando lo pongas en <strong>capconsultor.eu</strong> funcionará igual, porque
+      ese dominio también está en la lista de permitidos.
+    </p>
+  </div>
+
+  <!-- El launcher: misma línea que pegarás en tu web -->
+  <script src="/widget.js" defer></script>
+</body>
+</html>

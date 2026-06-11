@@ -37,10 +37,14 @@
     "position:fixed",
     "bottom:90px",
     "right:20px",
-    "width:380px",
-    "height:600px",
-    "max-width:calc(100vw - 40px)",
-    "max-height:calc(100vh - 120px)",
+    // Cuarto de pantalla (mitad ancho x mitad alto), anclado abajo-derecha.
+    // En móvil/pantalla pequeña se adapta sin desbordar (clamp por viewport).
+    "width:min(50vw, calc(100vw - 24px))",
+    "height:min(50vh, calc(100vh - 110px))",
+    "min-width:min(340px, calc(100vw - 24px))",
+    "min-height:min(460px, calc(100vh - 110px))",
+    "max-width:480px",
+    "max-height:720px",
     "border:none",
     "border-radius:16px",
     "box-shadow:0 12px 40px rgba(0,0,0,.18)",
