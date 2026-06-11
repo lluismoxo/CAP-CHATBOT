@@ -89,8 +89,7 @@ export default function Chat() {
     <div className="flex-1 flex flex-col">
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-4 py-4 px-1"
-        style={{ minHeight: "50vh", maxHeight: "65vh" }}
+        className="flex-1 overflow-y-auto space-y-4 py-4 px-1 min-h-0"
       >
         {messages.map((m, i) => (
           <MessageBubble key={i} role={m.role} content={m.content} />
