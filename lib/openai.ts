@@ -3,7 +3,9 @@ import OpenAI from "openai";
 let _client: OpenAI | null = null;
 
 export function getOpenAI(): OpenAI {
-  const key = process.env.OPENAI_API_KEY;
+  // .trim() evita el error "is not a legal HTTP header value" cuando la key
+  // se pega en Vercel con un salto de línea o espacio al final.
+  const key = process.env.OPENAI_API_KEY?.trim();
   if (!key) {
     throw new Error("OPENAI_API_KEY no configurada — añade la key en Vercel (Environment Variables) o en .env.local");
   }
@@ -13,7 +15,7 @@ export function getOpenAI(): OpenAI {
   return _client;
 }
 
-export const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+export const OPENAI_MODEL = (process.env.OPENAI_MODEL || "gpt-4o-mini").trim();
 
 export function isOpenAIConfigured() {
   return !!process.env.OPENAI_API_KEY;
