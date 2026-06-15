@@ -86,10 +86,10 @@ export default function Chat() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0">
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-4 py-4 px-1 min-h-0"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4 py-4 px-1"
       >
         {messages.map((m, i) => (
           <MessageBubble key={i} role={m.role} content={m.content} />
@@ -104,7 +104,7 @@ export default function Chat() {
       </div>
 
       {messages.length === 1 && (
-        <div className="flex flex-wrap gap-2 mb-3 px-1">
+        <div className="shrink-0 flex flex-wrap gap-2 mb-3 px-1">
           {suggestions.map((s) => (
             <button
               key={s}
@@ -117,9 +117,9 @@ export default function Chat() {
         </div>
       )}
 
-      {error && <p className="text-xs text-red-600 mb-2 px-1">{error}</p>}
+      {error && <p className="shrink-0 text-xs text-red-600 mb-2 px-1">{error}</p>}
 
-      <div className="border border-neutral-200 rounded-2xl bg-white shadow-sm focus-within:border-capblue transition">
+      <div className="shrink-0 border border-neutral-200 rounded-2xl bg-white shadow-sm focus-within:border-capblue transition">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
