@@ -54,7 +54,7 @@ cp .env.local.example .env.local
 
 **Recomendado además:** configurar **hard limit mensual** en https://platform.openai.com/account/limits (ej. 20 USD/mes) como red de seguridad final.
 
-> El proyecto Supabase ya está creado: **CAP CHATBOT** (`mhsphyvehhmkyvartsrr`). El esquema y los datos seed ya están aplicados.
+> El proyecto Supabase ya está creado: **CAP** (`dzslnlqylsnxotnidfhi`). El esquema y los datos seed ya están aplicados.
 
 ---
 
