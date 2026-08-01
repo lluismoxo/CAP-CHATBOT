@@ -10,26 +10,26 @@ export const runtime = "nodejs";
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
-const SYSTEM_PROMPT_TEMPLATE = (ctx: string) => `Eres el asistente virtual de CAP — Consultoría Adaptativa para Pymes (capconsultor.eu).
+const SYSTEM_PROMPT_TEMPLATE = (ctx: string) => `You are the virtual assistant for CAP — Adaptive Consulting for Small Businesses (capconsultor.eu).
 
-ROL:
-- Responder dudas sobre servicios, equipo, metodología y casos de éxito de CAP.
-- Calificar leads de forma natural y cercana: cuando sea oportuno, pregunta nombre, empresa, sector, qué problema quiere resolver y datos de contacto (email o teléfono) para que el equipo le llame.
-- Promover la oferta de entrada: llamada gratuita de 30 min + auditoría inicial sin coste.
+ROLE:
+- Answer questions about CAP's services, team, method and case studies.
+- Qualify leads naturally and warmly: when the moment is right, ask for their name, company, industry, the problem they want to solve, and contact details (email or phone) so the team can get back to them.
+- Promote the entry offer: a free 30-minute call plus a free initial audit.
 
-TONO:
-- Cercano, directo, profesional. Español por defecto. Si el usuario escribe en otro idioma, responde en ese idioma.
-- Respuestas breves (2-5 frases) salvo que pidan detalle.
-- Nunca inventes servicios, precios, tecnologías ni clientes que no aparezcan en el CONTEXTO.
+TONE:
+- Warm, direct, professional. English by default. If the user writes in another language, reply in that language.
+- Keep answers short (2-5 sentences) unless they ask for detail.
+- Never invent services, prices, technologies or clients that do not appear in the CONTEXT.
 
-REGLAS:
-- Si no sabes algo o no está en el CONTEXTO, dilo claramente y propón contactar al equipo.
-- Si el usuario muestra interés serio, ofrece la llamada gratuita y pide su email o teléfono.
-- No prometas plazos ni precios concretos: derívalos a la llamada/auditoría.
+RULES:
+- If you do not know something, or it is not in the CONTEXT, say so plainly and suggest contacting the team.
+- If the user shows serious interest, offer the free call and ask for their email or phone number.
+- Do not promise specific timelines or prices: point those to the call or audit.
 
-=== CONTEXTO ===
+=== CONTEXT ===
 ${ctx}
-=== FIN CONTEXTO ===`;
+=== END CONTEXT ===`;
 
 async function getOrCreateConversation(sessionId: string, req: NextRequest) {
   const admin = supabaseAdmin();
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
   try {
     const originCheck = checkOrigin(req);
     if (!originCheck.ok) {
-      return NextResponse.json({ error: "Origen no permitido" }, { status: 403 });
+      return NextResponse.json({ error: "Origin not allowed" }, { status: 403 });
     }
 
     const ip = getClientIP(req);
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     if (!rl.ok) {
       const retryAfter = Math.max(1, Math.ceil(((rl as any).resetAt - Date.now()) / 1000));
       return NextResponse.json(
-        { error: `Demasiadas peticiones. Espera unos minutos (límite por ${(rl as any).scope}).` },
+        { error: `Too many requests. Please wait a few minutes (${(rl as any).scope} limit).` },
         { status: 429, headers: { "Retry-After": String(retryAfter) } }
       );
     }
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
     const validation = validatePayload(body);
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
 
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     if (!lastUser) {
-      return NextResponse.json({ error: "Falta mensaje de usuario" }, { status: 400 });
+      return NextResponse.json({ error: "Missing user message" }, { status: 400 });
     }
 
     const conv = await getOrCreateConversation(sessionId, req);
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
 
     if (!isOpenAIConfigured()) {
       const fallback =
-        "Hola, soy el asistente de CAP Consultor. Aún no estoy conectado al modelo de lenguaje (falta configurar la OPENAI_API_KEY en el servidor), pero he guardado tu mensaje. Si quieres, escríbenos directamente a contact@capconsultor.eu o al +34 669 802 256 y agendamos una llamada gratuita de 30 minutos.";
+        "Hi, I'm the CAP Consultor assistant. I'm not connected to the language model yet (the OPENAI_API_KEY still needs to be configured on the server), but I've saved your message. If you like, write to us directly at contact@capconsultor.eu or call +34 669 802 256 and we'll set up a free 30-minute call.";
       await persistMessage(conv.id, "assistant", fallback);
       return NextResponse.json({ reply: fallback, conversationId: conv.id, configured: false });
     }
@@ -166,12 +166,12 @@ export async function POST(req: NextRequest) {
       max_tokens: 600,
     });
 
-    const reply = completion.choices[0]?.message?.content || "Lo siento, no he podido generar una respuesta.";
+    const reply = completion.choices[0]?.message?.content || "Sorry, I could not generate a reply.";
     await persistMessage(conv.id, "assistant", reply);
 
     return NextResponse.json({ reply, conversationId: conv.id, configured: true });
   } catch (err: any) {
     console.error("[/api/chat] error:", err);
-    return NextResponse.json({ error: err.message || "Error interno" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Internal error" }, { status: 500 });
   }
 }

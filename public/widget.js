@@ -1,14 +1,14 @@
 /**
- * CAP Chatbot — launcher de widget (burbuja flotante).
+ * CAP Chatbot — widget launcher (floating bubble).
  *
- * Uso en cualquier web:
+ * Usage on any site:
  *   <script src="https://TU-DOMINIO/widget.js" defer></script>
  *
- * Opcional, configurar antes de cargar el script:
+ * Optional, configure before loading the script:
  *   <script>window.CAP_WIDGET = { url: "https://TU-DOMINIO/", color: "#1E4DD8" };</script>
  *
- * Inyecta una burbuja en la esquina inferior derecha que abre/cierra un iframe
- * con el chat. No requiere dependencias.
+ * Injects a bubble in the bottom-right corner that opens/closes an iframe
+ * with the chat. No dependencies required.
  */
 (function () {
   "use strict";
@@ -17,7 +17,7 @@
   window.__capWidgetLoaded = true;
 
   var cfg = window.CAP_WIDGET || {};
-  // Dominio del chatbot: por defecto el mismo origen donde vive widget.js.
+  // Chatbot domain: defaults to the same origin widget.js is served from.
   var CHAT_URL =
     cfg.url ||
     (document.currentScript && document.currentScript.src
@@ -28,17 +28,17 @@
 
   var open = false;
 
-  // --- Iframe del chat -------------------------------------------------------
+  // --- Chat iframe -----------------------------------------------------------
   var frame = document.createElement("iframe");
   frame.src = CHAT_URL;
-  frame.title = "Asistente CAP";
+  frame.title = "CAP Assistant";
   frame.setAttribute("allow", "clipboard-write");
   frame.style.cssText = [
     "position:fixed",
     "bottom:90px",
     "right:20px",
-    // Cuarto de pantalla (mitad ancho x mitad alto), anclado abajo-derecha.
-    // En móvil/pantalla pequeña se adapta sin desbordar (clamp por viewport).
+    // A quarter of the screen (half width x half height), anchored bottom-right.
+    // On mobile/small screens it adapts without overflowing (clamped to viewport).
     "width:min(50vw, calc(100vw - 24px))",
     "height:min(50vh, calc(100vh - 110px))",
     "min-width:min(340px, calc(100vw - 24px))",
@@ -57,10 +57,10 @@
   ].join(";");
   frame.setAttribute("aria-hidden", "true");
 
-  // --- Botón burbuja ---------------------------------------------------------
+  // --- Bubble button ---------------------------------------------------------
   var btn = document.createElement("button");
   btn.type = "button";
-  btn.setAttribute("aria-label", "Abrir chat");
+  btn.setAttribute("aria-label", "Open chat");
   btn.style.cssText = [
     "position:fixed",
     "bottom:20px",
@@ -100,14 +100,14 @@
       frame.style.pointerEvents = "auto";
       frame.setAttribute("aria-hidden", "false");
       btn.innerHTML = ICON_CLOSE;
-      btn.setAttribute("aria-label", "Cerrar chat");
+      btn.setAttribute("aria-label", "Close chat");
     } else {
       frame.style.opacity = "0";
       frame.style.transform = "translateY(16px) scale(.98)";
       frame.style.pointerEvents = "none";
       frame.setAttribute("aria-hidden", "true");
       btn.innerHTML = ICON_CHAT;
-      btn.setAttribute("aria-label", "Abrir chat");
+      btn.setAttribute("aria-label", "Open chat");
     }
   }
 
