@@ -50,7 +50,7 @@ Chatbot RAG para CAP Consultor, **en inglés** desde el 02-08-2026. Next.js 16 (
 - [x] Repo en GitHub (`lluismoxo/CAP-CHATBOT`, privado) conectado a Vercel.
 - [ ] (Opcional) Panel admin para visualizar leads en lugar de hacer GET con curl.
 - [ ] (Opcional) Streaming de respuestas (actualmente JSON normal).
-- [ ] **Decidir el destino del widget en la web nueva**: hoy `assets/js/cap-chat.js` de `~/Desktop/CAP FINAL 2` apunta a `https://capchatbotfinal.vercel.app/`. Si la web nueva sustituye a `CAP13` en capconsultor.eu, revisar que el dominio siga en `frame-ancestors`.
+- [x] **Widget en la web nueva RESUELTO (02-08-2026)**: la web nueva sustituyó a la vieja en `CAP13`/capconsultor.eu y el widget carga el chatbot desde ese dominio, que ya estaba en `frame-ancestors`. Verificado en vivo.
 - [ ] (Opcional) Limpiar de `conversations`/`messages` el historial en español si ya no aporta.
 - [x] Embed widget en capconsultor.eu — HECHO (15-06): `window.CAP_WIDGET.url` apunta a `https://capchatbotfinal.vercel.app/`. La CSP `frame-ancestors` del chatbot ya permite `capconsultor.eu`/`www`, así que el iframe carga en el dominio (no en local/standalone).
 
