@@ -7,7 +7,7 @@ type Message = { role: "user" | "assistant"; content: string };
 const WELCOME: Message = {
   role: "assistant",
   content:
-    "Hi, I'm the CAP Consultor assistant. I can help with questions about automation, AI, accounting, marketing or any of our services. What do you have in mind?",
+    "Hola, soy el asistente de CAP Consultor. Te puedo ayudar con dudas sobre automatización, IA, contabilidad, marketing o cualquier servicio. ¿En qué estás pensando?",
 };
 
 function getSessionId(): string {
@@ -54,16 +54,16 @@ export default function Chat() {
         body: JSON.stringify({ sessionId: sessionIdRef.current, messages: next }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Server error");
+      if (!res.ok) throw new Error(data.error || "Error en el servidor");
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
     } catch (e: any) {
-      setError(e.message || "Network error");
+      setError(e.message || "Error de red");
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content:
-            "Sorry, something went wrong. You can write to us at contact@capconsultor.eu or call +34 669 802 256.",
+            "Disculpa, ha habido un problema. Puedes escribirnos a contact@capconsultor.eu o llamarnos al +34 669 802 256.",
         },
       ]);
     } finally {
@@ -79,10 +79,10 @@ export default function Chat() {
   }
 
   const suggestions = [
-    "What services do you offer?",
-    "I want to automate my accounting",
-    "I run a small business — how can you help?",
-    "Book a free call",
+    "¿Qué servicios ofrecéis?",
+    "Quiero automatizar mi contabilidad",
+    "Tengo una pyme, ¿cómo me ayudáis?",
+    "Pedir llamada gratuita",
   ];
 
   return (
@@ -124,18 +124,18 @@ export default function Chat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Write your message…"
+          placeholder="Escribe tu mensaje…"
           rows={2}
           className="w-full resize-none px-4 py-3 bg-transparent text-sm text-black placeholder-neutral-400 focus:outline-none rounded-2xl"
         />
         <div className="flex justify-between items-center px-3 pb-2">
-          <span className="text-[10px] text-neutral-400">Enter to send · Shift+Enter for a new line</span>
+          <span className="text-[10px] text-neutral-400">Enter para enviar · Shift+Enter salto</span>
           <button
             onClick={send}
             disabled={loading || !input.trim()}
             className="px-4 py-1.5 text-xs font-medium rounded-lg bg-capblue text-white hover:bg-capblue-dark disabled:bg-neutral-300 disabled:cursor-not-allowed transition"
           >
-            Send
+            Enviar
           </button>
         </div>
       </div>

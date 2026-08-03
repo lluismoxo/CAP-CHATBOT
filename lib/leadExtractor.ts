@@ -16,9 +16,9 @@ const EMAIL_RE = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
 const PHONE_RE = /(\+?\d[\d\s\-().]{7,}\d)/;
 
 // El bot responde en el idioma del usuario, asi que los patrones cubren
-// ingles (principal) y espanol (visitantes que escriben en castellano).
+// espanol (principal) e ingles (visitantes que escriben en ingles).
 // Palabras que nunca forman parte de un nombre propio: cortan la captura.
-const NAME_STOP = "(?:and|but|from|with|at|the|a|an|i|we|my|our|y|de|del|la|el)";
+const NAME_STOP = "(?:and|but|from|with|at|the|a|an|i|we|my|our|y|de|del|la|el|CEO|CTO|COO|CFO|director|directora|gerente|fundador|fundadora|responsable|jefe|jefa|encargado|encargada|consultor|consultora|manager|founder|owner)";
 
 const NAME_PATTERNS = [
   new RegExp(
@@ -47,6 +47,8 @@ const COMPANY_PATTERNS = [
   /\b(?:i work at|i work for|my company is|the company is|our company is|i run|i own|i manage)\s+([A-Z0-9][\w&.\- ]{1,40}?)(?=\s+(?:and|that|which|because|for|where|when)\b|[,.;!?]|$)/i,
   // "I'm the CEO of Acme Ltd", "founder of Acme"
   /\b(?:CEO|CTO|COO|CFO|founder|co-?founder|director|manager|owner|head)\s+(?:of|at)\s+([A-Z0-9][\w&.\- ]{1,40}?)(?=\s+(?:and|that|which|because|where|when)\b|[,.;!?]|$)/i,
+  // "Soy CEO de Acme", "director de Acme"
+  /\b(?:CEO|CTO|COO|CFO|director[a]?|gerente|fundador[a]?|co-?fundador[a]?|responsable|jefe[a]?|encargado[a]?)\s+(?:de|en)\s+([A-Z0-9][\w&.\-áéíóúñ ]{1,40}?)(?=\s+(?:y|que|,|\.|;|porque|para|donde|cuando)\b|[,.;!?]|$)/i,
   /\b(?:trabajo en|en la empresa|empresa se llama|mi empresa es|de la empresa|dirijo|llevo)\s+([A-Z0-9][\w&.\- ]{1,40}?)(?=\s+(?:y|que|,|\.|;|porque|para|donde|cuando)\b|[,.;!?]|$)/i,
   /\bsoy de\s+([A-Z][\w&.\- ]{2,40}?)(?=\s+(?:y|que|,|\.|;|porque|para)\b|[,.;!?]|$)/i,
 ];
@@ -87,20 +89,20 @@ const BUDGET_PATTERNS = [
 ];
 
 const INTEREST_KEYWORDS: Array<[RegExp, string]> = [
-  [/\b(automat\w*)\s+(?:my\s+|the\s+|our\s+)?(?:accounting|bookkeeping)|automatizar?\s+(?:la\s+|de\s+)?contabilidad/i, "Accounting automation"],
-  [/\b(stock|inventory|inventario)/i, "Stock management"],
-  [/\b(cash[\s-]?flow|treasury|liquidity|tesorer[ií]a|liquidez)/i, "Predictive financial management"],
-  [/\b(leads?|prospecting|outreach|captaci[oó]n)/i, "Lead generation"],
+  [/\b(automat\w*)\s+(?:my\s+|the\s+|our\s+)?(?:accounting|bookkeeping)|automatizar?\s+(?:la\s+|de\s+)?contabilidad/i, "Automatización contabilidad"],
+  [/\b(stock|inventory|inventario)/i, "Gestión de stock"],
+  [/\b(cash[\s-]?flow|treasury|liquidity|tesorer[ií]a|liquidez)/i, "Gestión financiera predictiva"],
+  [/\b(leads?|prospecting|outreach|captaci[oó]n)/i, "Generación de leads"],
   [/\b(seo|search rankings?|posicionamiento)/i, "SEO"],
-  [/\b(content|posts?|videos?|images?|contenido|v[ií]deos?|im[aá]genes)/i, "Content creation"],
+  [/\b(content|posts?|videos?|images?|contenido|v[ií]deos?|im[aá]genes)/i, "Creación de contenido"],
   [/\b(n8n|workflows?|orchestration|orquestaci[oó]n)/i, "Claude + n8n"],
   [/\b(marketing|campaigns?|campa[ñn]a)/i, "Marketing"],
-  [/\b(data|analytics|airflow|power\s*bi|tableau|datos|anal[ií]tica)/i, "Data analysis"],
-  [/\b(chatbot|assistant|agents?|asistente|agente)/i, "Chatbot / AI agents"],
-  [/\b(website|web\s?site|web page|landing page|p[aá]gina web)/i, "Website development"],
-  [/\b(booking|appointments?|calendar|reservas|citas)/i, "Booking and calendar automation"],
-  [/\b(reviews?|reputation|rese[ñn]as)/i, "Review collection"],
-  [/\b(loyalty|rewards?|fideliza\w*)/i, "Loyalty programmes"],
+  [/\b(data|analytics|airflow|power\s*bi|tableau|datos|anal[ií]tica)/i, "Análisis de datos"],
+  [/\b(chatbot|assistant|agents?|asistente|agente)/i, "Chatbot / agentes IA"],
+  [/\b(website|web\s?site|web page|landing page|p[aá]gina web)/i, "Desarrollo web"],
+  [/\b(booking|appointments?|calendar|reservas|citas)/i, "Automatización de reservas y calendarios"],
+  [/\b(reviews?|reputation|rese[ñn]as)/i, "Captación de reseñas"],
+  [/\b(loyalty|rewards?|fideliza\w*)/i, "Programas de fidelización"],
 ];
 
 const PAIN_PATTERNS = [
@@ -142,7 +144,7 @@ export function extractLeadInfo(text: string): ExtractedLead {
   if (industry) out.industry = industry;
 
   const size = firstMatch(t, SIZE_PATTERNS);
-  if (size) out.company_size = `${size} people`;
+  if (size) out.company_size = `${size} personas`;
 
   const timeline = firstMatch(t, TIMELINE_PATTERNS);
   if (timeline) out.timeline = timeline;
