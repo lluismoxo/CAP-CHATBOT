@@ -1,9 +1,9 @@
 # CAP Chatbot — Contexto de proyecto
 
-Última actualización: 2026-08-02
+Última actualización: 2026-08-04
 
 ## Resumen ejecutivo
-Chatbot RAG para CAP Consultor, **en inglés** desde el 02-08-2026. Next.js 16 (App Router) + Supabase + OpenAI, deploy en Vercel. Inyecta contexto completo de CAP en el system prompt, detecta info de leads en mensajes y los persiste en Supabase. UI minimalista blanco/azul/negro. Pendiente de aportar la `OPENAI_API_KEY` y `SUPABASE_SERVICE_ROLE_KEY` para activar el bot en producción.
+Chatbot RAG para CAP Consultor, **de vuelta en español** desde el 04-08-2026 (estuvo en inglés del 02 al 04-08). Next.js 16 (App Router) + Supabase + OpenAI, deploy en Vercel. Inyecta contexto completo de CAP en el system prompt, detecta info de leads en mensajes y los persiste en Supabase. UI minimalista blanco/azul/negro. Pendiente de aportar la `OPENAI_API_KEY` y `SUPABASE_SERVICE_ROLE_KEY` para activar el bot en producción.
 
 ## Estado técnico
 - **MIGRACIÓN SUPABASE (02-07-2026)**: las 11 tablas del chatbot migradas del proyecto `CAP CHATBOT` (`mhsphyvehhmkyvartsrr`) al proyecto `CAP` (`dzslnlqylsnxotnidfhi`) — un solo proyecto Supabase para todo. Sin conflictos de nombres (chatbot en inglés, negocio en español). Datos verificados: counts idénticos en las 11 tablas (115 messages, 19 conversations, 0 leads). RLS replicado: knowledge base SELECT anon, tablas operativas deny-by-default (solo service_role). Test en vivo: anon lee `services` OK, `clientes_restauracion` → permission denied, `leads` → vacío. El proyecto viejo `CAP CHATBOT` sigue intacto como backup (NO borrado). `.env.local` y `.env.local.example` actualizados a URL/publishable key de CAP.
