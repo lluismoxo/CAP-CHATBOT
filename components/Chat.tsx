@@ -7,7 +7,7 @@ type Message = { role: "user" | "assistant"; content: string };
 const WELCOME: Message = {
   role: "assistant",
   content:
-    "Hola, soy el asistente de CAP Consultor. Te puedo ayudar con dudas sobre automatización, IA, contabilidad, marketing o cualquier servicio. ¿En qué estás pensando?",
+    "Hola, soy el asistente de IA de CAP Consultor. Te puedo ayudar con dudas sobre nuestros servicios de comercio electrónico, automatización, software, marketing, gestión y consultoría tecnológica. ¿En qué estás pensando?",
 };
 
 function getSessionId(): string {
@@ -139,6 +139,14 @@ export default function Chat() {
           </button>
         </div>
       </div>
+
+      {/* El saludo ya dice que es una IA, pero desaparece al hacer scroll. Este
+          aviso queda siempre visible y recuerda además que no se deben escribir
+          datos sensibles, en linea con la Politica de Privacidad. */}
+      <p className="shrink-0 mt-2 px-1 text-[10px] leading-snug text-neutral-400">
+        Asistente de IA. Puede cometer errores; no introduzcas datos personales
+        sensibles ni información confidencial.
+      </p>
     </div>
   );
 }
