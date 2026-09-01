@@ -67,10 +67,11 @@ Web pública: export estático de Next.js en `lluismoxo/CAP13` (GitHub Pages). E
 
 ## Pendiente
 ### Web pública (31-08-2026)
-- [ ] **Ejecutar `supabase/limites-clientes-web.sql`** en Supabase → SQL Editor. Pone el límite de longitud real en `clientes_web` (el del formulario es solo de cliente) y borra la fila de prueba de 100.000 caracteres que dejó la auditoría. Es idempotente.
+- [x] **Límites de longitud APLICADOS en `clientes_web` (01-09-2026)**: el constraint `clientes_web_longitudes` rechaza inserts largos (verificado: 3.000 caracteres → error 23514).
+- [ ] **Borrar las filas de prueba**: ejecutar `supabase/limpiar-filas-prueba.sql`. Al verificar el aviso por email se insertaron varias filas marcadas (`__TEST_*`, `__E2E_*`, `__PRUEBA_*`). La RLS impide borrarlas con la clave pública, hay que hacerlo desde el SQL Editor.
 - [x] **Política de Privacidad: sección 12 "Chatbot de CAP Consultor"** (IA de OpenAI/GPT + aviso de no meter datos sensibles); "Cambios" renumerada a 13. Traducida a los 5 idiomas (442 claves). PUBLICADA.
 - [x] **Merge a `main` HECHO (31-08-2026)**, commit `e6adfc0`: multiidioma, traducción corregida y botones laterales fuera, ya en vivo en capconsultor.eu. **Ojo: GitHub Pages publica `main`** — mientras el trabajo estuvo en la rama, la web seguía mostrando la versión vieja.
-- [ ] **Activar el aviso por email** (pasos en `supabase/README.md` del repo): desplegar la Edge Function `notificar-contacto` con `--no-verify-jwt`, poner `RESEND_API_KEY` en los secrets y crear el Database Webhook sobre INSERT de `clientes_web`. Recomendable añadir `WEBHOOK_SECRET` + cabecera `x-webhook-secret`: la función no lleva JWT y sin secreto cualquiera que descubriera la URL podría provocar envíos.
+- [x] **AVISO POR EMAIL ACTIVO (01-09-2026)**: Edge Function desplegada, `RESEND_API_KEY` puesta, Database Webhook sobre INSERT de `clientes_web` creado y `WEBHOOK_SECRET` + cabecera `x-webhook-secret` configurados. Verificado de punta a punta: sin cabecera o con cabecera incorrecta → 401; con la correcta → `email_enviado: true`; e insert real desde el formulario de producción → aviso disparado.
 - [ ] (Opcional) Verificar `capconsultor.eu` en Resend para enviar desde `avisos@capconsultor.eu` en vez de `onboarding@resend.dev`.
 - [ ] Al tocar textos en castellano de la web: correr `node tools/i18n-check.js` y actualizar los 5 catálogos.
 
