@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  robots: { index: false, follow: false },
   title: "CAP Consultoría Adaptativa Pymes — Asistente",
   description: "Asistente virtual de CAP Consultoría Adaptativa Pymes. Automatización con IA, chatbots, lead generation y más.",
 };

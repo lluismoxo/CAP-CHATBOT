@@ -1,23 +1,12 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          {
-            // Only these origins may embed the chatbot in an iframe.
-            // Add any new domain here where you want the widget to work.
-            // localhost/127.0.0.1 are for local development of the CAP website.
-            key: "Content-Security-Policy",
-            value:
-              "frame-ancestors 'self' https://capconsultor.eu https://www.capconsultor.eu https://cap-sigma-two.vercel.app http://localhost:3000 http://127.0.0.1:3000 http://localhost:3001 http://127.0.0.1:3001;",
-          },
-        ],
-      },
-    ];
-  },
+module.exports = {
+  reactStrictMode:true,
+  poweredByHeader:false,
+  async headers(){return [{source:'/:path*',headers:[
+    {key:'X-Content-Type-Options',value:'nosniff'},
+    {key:'Referrer-Policy',value:'strict-origin-when-cross-origin'},
+    {key:'Permissions-Policy',value:'camera=(), microphone=(), geolocation=(), payment=()'},
+    {key:'X-Robots-Tag',value:'noindex, nofollow'},
+    {key:'Strict-Transport-Security',value:'max-age=31536000'},
+  ]},{source:'/api/:path*',headers:[{key:'Cache-Control',value:'no-store'}]}];}
 };
-
-module.exports = nextConfig;

@@ -1,3 +1,5 @@
+> Archivo histórico. Desde la auditoría del 25-10-2026, la documentación vigente es README.md. Ya no se conservan conversaciones ni se extraen leads; las cuotas son persistentes y el contacto requiere consentimiento.
+
 # CAP Chatbot — Contexto de proyecto
 
 Última actualización: 2026-08-31

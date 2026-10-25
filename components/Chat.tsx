@@ -10,28 +10,12 @@ const WELCOME: Message = {
     "Hola, soy el asistente de IA de CAP Consultor. Te puedo ayudar con dudas sobre nuestros servicios de comercio electrónico, automatización, software, marketing, gestión y consultoría tecnológica. ¿En qué estás pensando?",
 };
 
-function getSessionId(): string {
-  if (typeof window === "undefined") return "";
-  const k = "cap_session_id";
-  let v = localStorage.getItem(k);
-  if (!v) {
-    v = (crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2));
-    localStorage.setItem(k, v);
-  }
-  return v;
-}
-
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const sessionIdRef = useRef<string>("");
-
-  useEffect(() => {
-    sessionIdRef.current = getSessionId();
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -51,7 +35,8 @@ export default function Chat() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: sessionIdRef.current, messages: next }),
+        signal: AbortSignal.timeout(25000),
+        body: JSON.stringify({ messages: next.slice(-20).reduceRight<Message[]>((items, message) => { if (items.reduce((sum, item) => sum + item.content.length, 0) + message.content.length <= 12000) items.unshift(message); return items; }, []) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error en el servidor");
@@ -72,7 +57,7 @@ export default function Chat() {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       send();
     }
@@ -89,6 +74,7 @@ export default function Chat() {
     <div className="flex-1 flex flex-col min-h-0">
       <div
         ref={scrollRef}
+        role="log" aria-live="polite" aria-label="Conversación"
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4 py-4 px-1"
       >
         {messages.map((m, i) => (
@@ -126,6 +112,9 @@ export default function Chat() {
           onKeyDown={onKeyDown}
           placeholder="Escribe tu mensaje…"
           rows={2}
+          maxLength={2000}
+          aria-label="Mensaje para el asistente"
+          disabled={loading}
           className="w-full resize-none px-4 py-3 bg-transparent text-sm text-black placeholder-neutral-400 focus:outline-none rounded-2xl"
         />
         <div className="flex justify-between items-center px-3 pb-2">
@@ -145,7 +134,7 @@ export default function Chat() {
           datos sensibles, en linea con la Politica de Privacidad. */}
       <p className="shrink-0 mt-2 px-1 text-[10px] leading-snug text-neutral-400">
         Asistente de IA. Puede cometer errores; no introduzcas datos personales
-        sensibles ni información confidencial.
+        sensibles ni información confidencial. Los mensajes se envían a OpenAI para responder y CAP no guarda esta conversación. <a href="https://capconsultor.eu/privacy.html" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
       </p>
     </div>
   );

@@ -10,7 +10,7 @@ export function getOpenAI(): OpenAI {
     throw new Error("OPENAI_API_KEY no configurada — añade la key en Vercel (Environment Variables) o en .env.local");
   }
   if (!_client) {
-    _client = new OpenAI({ apiKey: key });
+    _client = new OpenAI({ apiKey: key, timeout: 18000, maxRetries: 0 });
   }
   return _client;
 }

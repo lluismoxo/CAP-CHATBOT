@@ -1,5 +1,7 @@
 import Chat from "@/components/Chat";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <main className="h-full flex flex-col bg-white overflow-hidden">

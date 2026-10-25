@@ -1,41 +1,15 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-
 export const runtime = "nodejs";
-
-function checkAdminAuth(req: NextRequest) {
-  const required = process.env.ADMIN_API_TOKEN;
-  if (!required) return false;
-  const provided = req.headers.get("x-admin-token");
-  return provided === required;
-}
-
 export async function GET(req: NextRequest) {
-  if (!checkAdminAuth(req)) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  }
-  const admin = supabaseAdmin();
-  const { data, error } = await admin
-    .from("leads")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(200);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ leads: data });
-}
-
-export async function POST(req: NextRequest) {
+  const expected = process.env.ADMIN_API_TOKEN;
+  const provided = req.headers.get("x-admin-token") || "";
+  if (!expected || Buffer.byteLength(expected) !== Buffer.byteLength(provided) || !timingSafeEqual(Buffer.from(expected),Buffer.from(provided))) return NextResponse.json({error:"No autorizado."},{status:401,headers:{"Cache-Control":"no-store"}});
   try {
-    const body = await req.json();
-    const admin = supabaseAdmin();
-    const { data, error } = await admin
-      .from("leads")
-      .insert({ ...body, source: body.source || "manual" })
-      .select("*")
-      .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ lead: data });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
-  }
+    const {data,error} = await supabaseAdmin().from("leads").select("id,name,email,phone,company,created_at").order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    return NextResponse.json({leads:data},{headers:{"Cache-Control":"no-store"}});
+  } catch {return NextResponse.json({error:"Servicio no disponible."},{status:503,headers:{"Cache-Control":"no-store"}});}
 }
+// No public creation endpoint. Contact requests use the validated /api/contact route.

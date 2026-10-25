@@ -30,7 +30,8 @@
 
   // --- Iframe del chat -------------------------------------------------------
   var frame = document.createElement("iframe");
-  frame.src = CHAT_URL;
+  frame.hidden = true;
+  frame.referrerPolicy = "strict-origin-when-cross-origin";
   frame.title = "Asistente CAP";
   frame.setAttribute("allow", "clipboard-write");
   frame.style.cssText = [
@@ -94,6 +95,9 @@
 
   function setOpen(v) {
     open = v;
+    frame.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+    if(open && !frame.getAttribute("src"))frame.src=CHAT_URL;
     if (open) {
       frame.style.opacity = "1";
       frame.style.transform = "translateY(0) scale(1)";

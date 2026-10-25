@@ -1,164 +1,46 @@
-# CAP Chatbot
+# CAP Chatbot y contacto
 
-Chatbot RAG para **CAP — Consultoría Adaptativa Pymes**. Next.js 15 (App Router) + Supabase + OpenAI.
+Next.js 16, React 19, Supabase y OpenAI. Despliegue de producción desde `main` en Vercel: https://capchatbotfinal.vercel.app.
 
-- Inyecta contexto completo de CAP (servicios, equipo, casos de éxito, filosofía) desde Supabase en el system prompt.
-- Detecta automáticamente datos de lead (nombre, email, teléfono, empresa, sector, intereses) en los mensajes del usuario y los guarda en la tabla `leads`.
-- UI minimalista blanco/azul/negro.
+## Comprobación
 
-## Stack
-
-| Capa | Tecnología |
-|------|-----------|
-| Frontend | Next.js 16 (App Router) + React 19 + TailwindCSS |
-| Backend | Next.js API Routes (Node runtime) |
-| LLM | OpenAI (`gpt-4o-mini` por defecto) |
-| Base de datos | Supabase (Postgres + RLS) |
-| Deploy | Vercel |
-
----
-
-## 1. Variables de entorno
-
-Copia `.env.local.example` a `.env.local`:
-
-```bash
-cp .env.local.example .env.local
+```sh
+npm ci
+npm test
+npm run lint
+npm run build
+npm run test:integration
 ```
 
-| Variable | Dónde se obtiene | Obligatoria |
-|----------|-----------------|-------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API → Project URL | Sí |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → `anon` / publishable | Sí |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → `service_role` (¡secreta!) | Sí (para escribir leads/conversaciones) |
-| `OPENAI_API_KEY` | platform.openai.com → API Keys | Sí (en producción; sin ella el chat responde con fallback) |
-| `OPENAI_MODEL` | Modelo OpenAI a usar | No (default `gpt-4o-mini`) |
-| `ADMIN_API_TOKEN` | Token cualquiera que invente usted | No (solo si quiere acceder a `GET /api/leads`) |
-| `ALLOWED_ORIGINS` | Lista CSV de origins permitidos | No (default: capconsultor.eu + dominio Vercel + localhost) |
+La integración usa exclusivamente un servidor Supabase simulado en localhost y datos ficticios. Requiere el build previo. No envía correos ni escribe en producción.
 
-## Seguridad anti-abuso
+## Configuración del servidor
 
-`POST /api/chat` aplica capas defensa:
+- `NEXT_PUBLIC_SUPABASE_URL`: URL del proyecto existente. Se usa únicamente desde el servidor.
+- `SUPABASE_SERVICE_ROLE_KEY`: secreto del servidor para contexto público, cuotas y contacto. Nunca exponer en el navegador.
+- `OPENAI_API_KEY`: secreto del proveedor IA.
+- `OPENAI_MODEL`: modelo opcional, por defecto `gpt-4o-mini`.
+- `ADMIN_API_TOKEN`: opcional para `GET /api/leads`; sin configurar, siempre deniega el acceso. No necesario para la web.
 
-1. **Origin check**: solo acepta requests desde dominios en `ALLOWED_ORIGINS` (en producción).
-2. **Rate limit por IP** (in-memory):
-   - 10 mensajes/minuto
-   - 50 mensajes/hora
-   - 200 mensajes/día
-3. **Validación entrada**:
-   - Max 2000 chars por mensaje
-   - Max 30 mensajes por request
-   - Max 20000 chars totales en histórico
-4. **Sanitización prompt injection**: bloquea patrones tipo "ignore previous instructions".
-5. **OpenAI**: `max_tokens: 600` cap por respuesta.
+La antigua clave anónima y `ALLOWED_ORIGINS` ya no se usan. La lista de dominios permitidos está en `lib/security.ts`; los dominios de desarrollo solo funcionan fuera de producción. No registrar secretos ni cuerpos de consultas en logs.
 
-**Recomendado además:** configurar **hard limit mensual** en https://platform.openai.com/account/limits (ej. 20 USD/mes) como red de seguridad final.
+## Flujo y privacidad
 
-> El proyecto Supabase ya está creado: **CAP** (`dzslnlqylsnxotnidfhi`). El esquema y los datos seed ya están aplicados.
+`POST /api/chat` admite solo mensajes user/assistant, hasta 20 mensajes, 2.000 caracteres por mensaje y 12.000 por historial. El servidor controla el prompt, consulta campos explícitos de las tablas públicas de conocimiento (caché 5 minutos) y llama a OpenAI, con máximo 600 tokens de respuesta y timeout. No conserva conversaciones ni extrae datos personales. Los registros anteriores permanecen para que el titular gestione su conservación y derechos; no se borran automáticamente.
 
----
+`POST /api/contact` exige consentimiento explícito, valida tipos/longitudes, detecta honeypot, limita peticiones y guarda exclusivamente nombre, empresa, email, mensaje, origen y evidencia de consentimiento. CORS permite los orígenes de CAP. Los webhooks existentes de la base de datos siguen funcionando. La clave anónima del navegador no debe tener INSERT en `clientes_web` una vez migrado el formulario.
 
-## 2. Instalación local
+`GET /api/leads` requiere token de administrador con comparación constante. `POST /api/leads` está eliminado. Todas las API responden sin caché y con errores genéricos.
 
-```bash
-npm install
-npm run dev
-```
+## Cuotas persistentes
 
-Abrir <http://localhost:3000>.
+La función SQL `cap_check_rate_limits` y la tabla privada de contadores están en la migración del repositorio CAP. Los identificadores IP/email se derivan con HMAC y caducan en un máximo de 24 horas. El borrado de contadores vencidos se realiza en la siguiente petición, por lo que los registros pueden permanecer físicamente hasta entonces. La función solo puede ejecutarla service_role. Ante indisponibilidad de las cuotas, las API fallan de forma cerrada.
 
----
+- Chat: 10/minuto, 50/hora y 200/día por IP; 1.000/día globales.
+- Contacto: 3/15 minutos y 10/día por IP; 3/día por email; 100/día globales.
 
-## 3. Esquema Supabase
+Se usan ventanas fijas. Una IP compartida comparte cuota; los límites globales protegen costes pero un abuso puede consumir la cuota disponible. Origin es una defensa del navegador, no autenticación. Mantener límites de gasto y vigilancia de consumo del proveedor. La aplicación no tiene herramientas que ejecuten acciones por instrucciones del modelo; no se promete inmunidad a prompt injection.
 
-Tablas ya creadas:
+## Interfaz y cabeceras
 
-- `company_info` — datos de identidad, contacto, filosofía.
-- `target_audience` — segmentos de cliente objetivo.
-- `services` — catálogo de servicios.
-- `team_members` — equipo.
-- `clients` — casos de éxito.
-- `partners` — socios y colaboradores.
-- `leads` — leads capturados desde el chat (clave: `email` indexada).
-- `conversations` — una por sesión de chat.
-- `messages` — historial de cada conversación.
-
-Las tablas de info pública tienen `RLS` con policy `public_read_*`.
-Las tablas `leads`, `conversations`, `messages` solo son accesibles desde el backend con la `SUPABASE_SERVICE_ROLE_KEY` (no tienen policies para anon, por seguridad).
-
----
-
-## 4. Cómo funciona el RAG
-
-1. En cada petición `POST /api/chat`:
-   - Se obtiene/crea la conversación por `sessionId` (UUID guardado en `localStorage`).
-   - Se guarda el mensaje del usuario en `messages`.
-   - Se ejecuta `extractLeadInfo(text)` sobre el mensaje del usuario y, si detecta señales (email, teléfono, nombre, empresa, interés, pain points…), se hace `upsert` en `leads` y se vincula la conversación.
-   - Se carga (con caché de 5 min) todo el contexto de CAP desde Supabase y se inyecta en el system prompt.
-   - Se llama a OpenAI con los mensajes históricos del usuario.
-   - Se guarda la respuesta del asistente y se devuelve al cliente.
-
-Si `OPENAI_API_KEY` no está configurada, el endpoint devuelve un mensaje fallback amistoso (e igualmente guarda el mensaje y extrae el lead).
-
----
-
-## 5. Endpoints
-
-### `POST /api/chat`
-
-```json
-{
-  "sessionId": "uuid-cliente",
-  "messages": [
-    { "role": "user", "content": "Hola, soy Marcos de Pyme XYZ" }
-  ]
-}
-```
-
-Respuesta:
-```json
-{ "reply": "...", "conversationId": "uuid", "configured": true }
-```
-
-### `GET /api/leads` (admin)
-
-Cabecera `x-admin-token: <ADMIN_API_TOKEN>`. Devuelve los últimos 200 leads.
-
-### `POST /api/leads`
-
-Crear lead manualmente. No requiere auth (puedes proteger si quieres).
-
----
-
-## 6. Deploy en Vercel
-
-1. Sube el repo a GitHub.
-2. En Vercel → **New Project** → importa el repo.
-3. En **Environment Variables** añade:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (marcar como secret)
-   - `OPENAI_API_KEY` (cuando la tengas)
-   - `OPENAI_MODEL` (opcional)
-   - `ADMIN_API_TOKEN` (opcional)
-4. Deploy. La región está fijada a `fra1` (Frankfurt) para minimizar latencia con Supabase `eu-west-1`.
-
----
-
-## 7. Añadir la OpenAI API key más tarde
-
-Cuando obtengas la key:
-
-- **Local:** edita `.env.local` con `OPENAI_API_KEY=sk-...` y reinicia `npm run dev`.
-- **Producción (Vercel):** Project → Settings → Environment Variables → añade `OPENAI_API_KEY` → redeploy.
-
-No hace falta tocar código. Mientras tanto el bot responde con un fallback pero los leads se siguen guardando.
-
----
-
-## 8. Personalización
-
-- **Tono/instrucciones del bot:** editar `SYSTEM_PROMPT_TEMPLATE` en `app/api/chat/route.ts`.
-- **Detectores de lead:** ampliar regex/keywords en `lib/leadExtractor.ts`.
-- **Colores marca:** `tailwind.config.js` (`capblue`).
-- **Datos CAP:** se editan directamente en Supabase (Table Editor) — el bot los recoge automáticamente (caché 5 min).
+La web CAP integra el asistente después del permiso opcional del visitante. CSP con nonce dinámico, lista restringida de frame-ancestors, HSTS, nosniff, permisos de navegador limitados y noindex en todo el proyecto del chatbot. El dominio principal conserva su indexación independiente. El widget genérico `public/widget.js` carga solo al abrir; cada web que lo integre debe gestionar sus propios avisos y permisos.

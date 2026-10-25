@@ -1,4 +1,4 @@
-import { supabasePublic } from "./supabase";
+import { supabaseAdmin } from "./supabase";
 
 type CompanyInfo = Record<string, any>;
 type Row = Record<string, any>;
@@ -11,15 +11,17 @@ export async function buildCAPContext(): Promise<string> {
   if (cache && cache.expires > now) return cache.text;
 
   const [company, audience, services, team, clients, partners, industries, industryServices] = await Promise.all([
-    supabasePublic.from("company_info").select("*").limit(1).maybeSingle(),
-    supabasePublic.from("target_audience").select("*"),
-    supabasePublic.from("services").select("*").order("is_primary", { ascending: false }),
-    supabasePublic.from("team_members").select("*"),
-    supabasePublic.from("clients").select("*"),
-    supabasePublic.from("partners").select("*"),
-    supabasePublic.from("industries").select("*").order("id"),
-    supabasePublic.from("industry_services").select("*"),
+    supabaseAdmin().from("company_info").select("name,full_name,website,sector,location,value_proposition,metrics,email,phone,instagram,linkedin,headquarters,entry_offer,philosophy,what_they_dont_do,values,tech_stack").limit(1).maybeSingle(),
+    supabaseAdmin().from("target_audience").select("segment,description"),
+    supabaseAdmin().from("services").select("name,category,description,tools,is_primary").order("is_primary", { ascending: false }),
+    supabaseAdmin().from("team_members").select("name,role,bio"),
+    supabaseAdmin().from("clients").select("name,sector,location,case_study"),
+    supabaseAdmin().from("partners").select("name,type,description"),
+    supabaseAdmin().from("industries").select("id,name,description").order("id"),
+    supabaseAdmin().from("industry_services").select("industry_id,service_name"),
   ]);
+
+  if([company,audience,services,team,clients,partners,industries,industryServices].some(result=>result.error))throw new Error("Knowledge unavailable");
 
   const c: CompanyInfo = company.data || {};
   const aud: Row[] = audience.data || [];
@@ -33,6 +35,7 @@ export async function buildCAPContext(): Promise<string> {
   const parts: string[] = [];
 
   parts.push("# CONTEXTO CAP CONSULTOR");
+  parts.push("Datos vigentes: CAP es una iniciativa personal sin ánimo de lucro, sin empresa constituida. Actualmente los servicios son gratuitos. Consultoría general con especialización tecnológica desde Barcelona para España y otros países. Contacto: contact@capconsultor.eu y +34 669 802 256. No se ofrece el antiguo servicio de reservas, tarjetas NFC ni fidelización. Sí se ofrece software a medida (Service as a Software): aplicaciones web y móviles, programas de gestión e integraciones. Estos datos prevalecen sobre cualquier información histórica que aparezca después.");
   parts.push("");
   parts.push("## 1. IDENTIDAD");
   parts.push(`- Nombre: ${c.name || "CAP"}`);

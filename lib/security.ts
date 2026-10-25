@@ -1,85 +1,51 @@
-export const LIMITS = {
-  maxMessageChars: 2000,
-  maxMessagesPerRequest: 30,
-  maxTotalChars: 20000,
-};
-
-const DEFAULT_ALLOWED = [
-  "https://capconsultor.eu",
-  "https://www.capconsultor.eu",
-  "https://capchatbotfinal.vercel.app",
-  "https://cap-chatbot-iota.vercel.app",
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-];
-
-function getAllowedOrigins(): string[] {
-  const env = process.env.ALLOWED_ORIGINS;
-  if (!env) return DEFAULT_ALLOWED;
-  return env.split(",").map((s) => s.trim()).filter(Boolean);
-}
-
-export function checkOrigin(req: Request): { ok: boolean; reason?: string } {
+export const LIMITS = { maxMessageChars: 2000, maxMessagesPerRequest: 20, maxTotalChars: 12000 };
+const ORIGINS = new Set(["https://capconsultor.eu", "https://www.capconsultor.eu", "https://cap-sigma-two.vercel.app", "https://capchatbotfinal.vercel.app"]);
+export function checkOrigin(req: Request): boolean {
   const origin = req.headers.get("origin");
-  const referer = req.headers.get("referer");
-  const allowed = getAllowedOrigins();
-
-  if (process.env.NODE_ENV !== "production") return { ok: true };
-
-  const source = origin || (referer ? new URL(referer).origin : null);
-  if (!source) return { ok: false, reason: "Sin origen" };
-  if (!allowed.includes(source)) return { ok: false, reason: `Origen no permitido: ${source}` };
-  return { ok: true };
+  if (process.env.NODE_ENV !== "production" && origin && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) return true;
+  return !!origin && ORIGINS.has(origin) && req.headers.get("sec-fetch-site") !== "none";
 }
-
-export type ValidationResult =
-  | { ok: true }
-  | { ok: false; error: string; status: number };
-
-export function validatePayload(body: any): ValidationResult {
-  if (!body || typeof body !== "object") return { ok: false, error: "Body inválido", status: 400 };
-  const { sessionId, messages } = body;
-  if (typeof sessionId !== "string" || sessionId.length < 4 || sessionId.length > 100) {
-    return { ok: false, error: "sessionId inválido", status: 400 };
-  }
-  if (!Array.isArray(messages) || !messages.length) {
-    return { ok: false, error: "messages requerido", status: 400 };
-  }
-  if (messages.length > LIMITS.maxMessagesPerRequest) {
-    return { ok: false, error: `Demasiados mensajes (máx ${LIMITS.maxMessagesPerRequest})`, status: 400 };
-  }
-  let totalChars = 0;
+export class RequestError extends Error { status: number; constructor(message: string, status = 400) { super(message); this.status = status; } }
+export async function readJson(req: Request, maxBytes = 20000): Promise<unknown> {
+  if (!/^application\/json(?:;|$)/i.test(req.headers.get("content-type") || "")) throw new RequestError("Formato no permitido.", 415);
+  if (Number(req.headers.get("content-length")) > maxBytes) throw new RequestError("Solicitud demasiado grande.", 413);
+  const reader = req.body?.getReader();
+  if (!reader) throw new RequestError("Solicitud vacía.");
+  const chunks: Uint8Array[] = []; let size = 0;
+  try {
+    while (true) {
+      const {done, value} = await reader.read(); if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) { await reader.cancel(); throw new RequestError("Solicitud demasiado grande.", 413); }
+      chunks.push(value);
+    }
+    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  } catch (error) { if (error instanceof RequestError) throw error; throw new RequestError("JSON inválido."); }
+}
+export type ChatMessage = {role: "user" | "assistant"; content: string};
+export function validateMessages(body: unknown): ChatMessage[] {
+  if (!body || typeof body !== "object" || !("messages" in body) || !Array.isArray(body.messages)) throw new RequestError("Faltan mensajes.");
+  const messages = body.messages;
+  if (!messages.length || messages.length > LIMITS.maxMessagesPerRequest) throw new RequestError("Historial demasiado largo.");
+  let total = 0;
   for (const m of messages) {
-    if (!m || typeof m !== "object") return { ok: false, error: "Mensaje inválido", status: 400 };
-    if (m.role !== "user" && m.role !== "assistant" && m.role !== "system") {
-      return { ok: false, error: "Rol inválido", status: 400 };
-    }
-    if (typeof m.content !== "string") return { ok: false, error: "Contenido inválido", status: 400 };
-    if (m.content.length > LIMITS.maxMessageChars) {
-      return { ok: false, error: `Mensaje demasiado largo (máx ${LIMITS.maxMessageChars} chars)`, status: 400 };
-    }
-    totalChars += m.content.length;
+    if (!m || !["user", "assistant"].includes(m.role) || typeof m.content !== "string" || !m.content.trim() || m.content.length > LIMITS.maxMessageChars) throw new RequestError("Mensaje inválido o demasiado largo.");
+    total += m.content.length;
   }
-  if (totalChars > LIMITS.maxTotalChars) {
-    return { ok: false, error: "Historial demasiado largo", status: 400 };
-  }
-  return { ok: true };
+  if (total > LIMITS.maxTotalChars || messages.at(-1).role !== "user") throw new RequestError("Historial inválido.");
+  return messages.map(m => ({role: m.role, content: m.content.trim()}));
 }
-
-const INJECTION_PATTERNS = [
-  /ignore\s+(all\s+)?previous\s+(instructions|prompts)/i,
-  /disregard\s+(all\s+)?(previous|system)/i,
-  /you\s+are\s+now\s+(a\s+)?(different|new)/i,
-  /\bsystem\s*:\s*you\s+are\b/i,
-  /\bact\s+as\s+(a\s+)?(different|new)\s+(assistant|ai|bot|model)/i,
-  /reveal\s+(your\s+)?(system\s+)?(prompt|instructions)/i,
-  /print\s+(your\s+)?(system\s+)?prompt/i,
-];
-
-export function sanitizeUserMessage(text: string): string {
-  let t = text.slice(0, LIMITS.maxMessageChars);
-  for (const re of INJECTION_PATTERNS) {
-    t = t.replace(re, "[contenido bloqueado]");
+export function validateContact(body: unknown) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) throw new RequestError("Solicitud inválida.");
+  const b = body as Record<string, unknown>;
+  function field(key: string, max: number, required = false) {
+    const value = b[key] ?? "";
+    if (typeof value !== "string" || value.length > max || /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(value)) throw new RequestError("Revisa los campos del formulario.");
+    if (required && !value.trim()) throw new RequestError("Completa los campos obligatorios.");
+    return value.trim();
   }
-  return t;
+  const name = field("name", 120, true), company = field("company", 160), email = field("email", 254, true).toLowerCase(), message = field("message", 4000);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new RequestError("El email no es válido.");
+  if (b.consent !== true) throw new RequestError("Debes autorizar el tratamiento de tu consulta.");
+  return {name, company, email, message, honeypot: field("website_url", 200)};
 }
