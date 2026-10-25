@@ -12,7 +12,7 @@ const nextConfig = {
             // localhost/127.0.0.1 are for local development of the CAP website.
             key: "Content-Security-Policy",
             value:
-              "frame-ancestors 'self' https://capconsultor.eu https://www.capconsultor.eu http://localhost:3000 http://127.0.0.1:3000 http://localhost:3001 http://127.0.0.1:3001;",
+              "frame-ancestors 'self' https://capconsultor.eu https://www.capconsultor.eu https://cap-sigma-two.vercel.app http://localhost:3000 http://127.0.0.1:3000 http://localhost:3001 http://127.0.0.1:3001;",
           },
         ],
       },
