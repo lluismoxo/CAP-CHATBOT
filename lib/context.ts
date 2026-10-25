@@ -25,12 +25,13 @@ export async function buildCAPContext(): Promise<string> {
 
   const c: CompanyInfo = company.data || {};
   const aud: Row[] = audience.data || [];
-  const srv: Row[] = services.data || [];
+  const retiredService = (name: string) => /reservas|reseñas|fidelización|NFC|booking|loyalty/i.test(name);
+  const srv: Row[] = (services.data || []).filter(row => !retiredService(row.name));
   const tm: Row[] = team.data || [];
   const cli: Row[] = clients.data || [];
   const prt: Row[] = partners.data || [];
   const ind: Row[] = industries.data || [];
-  const indSrv: Row[] = industryServices.data || [];
+  const indSrv: Row[] = (industryServices.data || []).filter(row => !retiredService(row.service_name));
 
   const parts: string[] = [];
 

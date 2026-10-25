@@ -18,7 +18,7 @@ export default function Chat() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }, [messages, loading]);
 
   async function send() {
@@ -40,9 +40,10 @@ export default function Chat() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error en el servidor");
+      if (typeof data.reply !== "string" || !data.reply.trim()) throw new Error("Respuesta no disponible.");
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-    } catch (e: any) {
-      setError(e.message || "Error de red");
+    } catch (e: unknown) {
+      setError(e instanceof Error && e.name !== "TimeoutError" ? e.message : "El asistente ha tardado demasiado. Puedes volver a intentarlo.");
       setMessages((prev) => [
         ...prev,
         {
@@ -115,10 +116,10 @@ export default function Chat() {
           maxLength={2000}
           aria-label="Mensaje para el asistente"
           disabled={loading}
-          className="w-full resize-none px-4 py-3 bg-transparent text-sm text-black placeholder-neutral-400 focus:outline-none rounded-2xl"
+          className="w-full resize-none px-4 py-3 bg-transparent text-sm text-black placeholder-neutral-500 focus:outline-none rounded-2xl"
         />
         <div className="flex justify-between items-center px-3 pb-2">
-          <span className="text-[10px] text-neutral-400">Enter para enviar · Shift+Enter salto</span>
+          <span className="text-xs text-neutral-600">Enter para enviar · Shift+Enter salto</span>
           <button
             onClick={send}
             disabled={loading || !input.trim()}
@@ -132,7 +133,7 @@ export default function Chat() {
       {/* El saludo ya dice que es una IA, pero desaparece al hacer scroll. Este
           aviso queda siempre visible y recuerda además que no se deben escribir
           datos sensibles, en linea con la Politica de Privacidad. */}
-      <p className="shrink-0 mt-2 px-1 text-[10px] leading-snug text-neutral-400">
+      <p className="shrink-0 mt-2 px-1 text-xs leading-snug text-neutral-600">
         Asistente de IA. Puede cometer errores; no introduzcas datos personales
         sensibles ni información confidencial. Los mensajes se envían a OpenAI para responder y CAP no guarda esta conversación. <a href="https://capconsultor.eu/privacy.html" target="_blank" rel="noopener noreferrer" className="underline">Privacidad</a>
       </p>
