@@ -1,3 +1,5 @@
+// Use native fetch in the current Node runtime; avoid the legacy node-fetch URL parser.
+import "openai/shims/web";
 import OpenAI from "openai";
 
 let _client: OpenAI | null = null;
@@ -16,7 +18,3 @@ export function getOpenAI(): OpenAI {
 }
 
 export const OPENAI_MODEL = (process.env.OPENAI_MODEL || "gpt-4o-mini").trim();
-
-export function isOpenAIConfigured() {
-  return !!process.env.OPENAI_API_KEY;
-}
